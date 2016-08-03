@@ -17,55 +17,40 @@
  *
  */
 
-#ifndef SIMPLEVECTOR_HPP
-#define SIMPLEVECTOR_HPP
+#ifndef CHROMATICTREE_HPP
+#define CHROMATICTREE_HPP
 
-template <class T> 
-class simple_vector {
+#include "polytree.hpp"
+
+class chromatic_tree : public polytree {
 	
-	T* array = NULL;
-	int64_t capacity = 0;
-	int64_t sz = 0;
+	polyoptions default_options;
+	polyoptions insert_options;
+	polyoptions put_options;
+	polyoptions remove_options;
+	polyoptions get_options;
+	polyoptions replace_options;
 
 public:
 	
-	simple_vector<T>(int64_t capacity) : capacity(capacity){
-		sz = 0;
-		assert(capacity>0);
-		array = (T*)malloc(capacity*sizeof(T));
-	}
+	chromatic_tree();
 
-	inline void push_back(T val){
-		assert(array!=NULL);
-		if(sz>=capacity){
-			T* new_array = (T*)malloc(capacity*2*sizeof(T));
-			memcpy(new_array,array,capacity*sizeof(T));
-			free(array);
-			capacity = capacity*2;
-			array = new_array;
-		}
-		assert(sz<capacity);
-		array[sz] = val;
-		sz++;
-	}
+	value* get(key* k);
+	value* put(key* k, value* v);
+	bool insert(key* k, value* v);
+	value* remove(key* k);
+	value* replace(key* k, value* v);
 
-	inline void pop_back(){
-		if(sz>0){sz--;}
-	}
+	polynode* get_update_node(key* k, value* v,
+	 simple_vector<fptr_val<polynode>>& path, polyoptions opts,
+	 value*& ans_value_out, bool& callback_out, void* params);
 
-	inline void clear(){sz=0;}
-	inline T back(){
-		assert(sz>0);
-		return get(rbegin());
-	}
-	inline T get(int idx){
-		assert(idx>=0);
-		assert(idx<sz);
-		assert(idx<capacity);
-		return array[idx];
-	}
-	inline int64_t size(){return sz;}
-	inline int64_t rbegin(){return sz-1;}
+	value* get_point_read_value(key* k, 
+	 simple_vector<fptr_val<polynode>>& path, polyoptions opts);
+
+	void on_update_success(key* k, value* v,
+	 simple_vector<fptr_val<polynode>>& path, polynode* new_node,
+	 polynode* old_node, polyoptions opts);
 
 };
 

@@ -32,7 +32,7 @@
 #include "polytree.hpp"
 #include "radixtree/radixtree.hpp"
 #include "hashtrie/hashtrie.hpp"
-
+#include "chromatictree/chromatictree.hpp"
 
 using namespace std;
 
@@ -82,7 +82,8 @@ int main (int argv,char** argc){
 		keys[i]=key::alloc(buf,8);
 		values[i]=value::alloc(buf,8);
 	}
-	hash_trie* tree = new hash_trie();
+	chromatic_tree* tree = new chromatic_tree();
+//	hash_trie* tree = new hash_trie();
 	value* ans;
 
 	for(int i = 0; i<SZ_DATA; i++){

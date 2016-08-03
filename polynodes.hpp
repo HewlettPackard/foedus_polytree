@@ -112,6 +112,23 @@ public:
 		return memcmp((char*)contents(),(char*)x->contents(),len())==0;
 	}
 
+	inline int cmp(const key_or_value* x) const{
+		size_t l1 = x->len();
+		size_t l2 = len();
+		if(l1 == l2){
+			return memcmp((char*)contents(),(char*)x->contents(),l1);
+		}
+		else{
+			size_t length = std::min(l1,l2);
+			int retval = memcmp((char*)contents(),(char*)x->contents(),length);
+			if(retval==0){
+				if(l1<l2){return -1;}
+				else{return 1;}
+			}
+			else{return retval;}
+		}
+	}
+
 	static inline key_or_value* alloc(char* str, int n){
 		size_t len = n;
 		void* ptr = malloc(sizeof(key_or_value)+len);
@@ -243,6 +260,12 @@ public:
 
 	void inline local_insert(key* k, polynode* node){
 		fptr<polynode>* here = slot(k);
+		assert(here!=NULL);
+		assert(here!=DNE);
+		here->init(node,FP_VALID);
+	}
+
+	void inline local_insert_at(fptr<polynode>* here, polynode* node){
 		assert(here!=NULL);
 		assert(here!=DNE);
 		here->init(node,FP_VALID);

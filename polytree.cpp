@@ -39,15 +39,6 @@ inline simple_vector<fptr_val<polynode>>* get_my_vector(){
 	return my_vector;
 }
 
-/* from POSIX std library man page */
-thread_local unsigned long my_rand = 1; 
-unsigned long local_rand(){
-	unsigned long next = my_rand;
-	next = next * 1103515245 + 12345;
-	my_rand = ((unsigned)(next/65536) % 32768);
-	return my_rand;
-}
-
 /*
 Simple search for a key. Never triggers a substitution.
 key k : the key to find
@@ -72,20 +63,15 @@ bool polytree::search(key* k, simple_vector<fptr_val<polynode>>& path,
 	while(true){
 		current = here_cpy.ptr();
 		flag = here_cpy.flag();
-		if(current == NULL){
+		if(unlikely(current == NULL)){
 			fptr_val<polynode> fv;
 			fv.init(here,here_cpy);
 			path.push_back(fv);
 			return true;
 		}
-		else if(flag == FP_VALID){
-			if(polydata* pd = dynamic_cast<polydata*>(current)){
-				fptr_val<polynode> fv;
-				fv.init(here,here_cpy);
-				path.push_back(fv);
-				return true;
-			}
-			else if(polyinterior* pi = dynamic_cast<polyinterior*>(current)){
+		else if(likely(flag == FP_VALID)){
+			if(likely(dynamic_cast<polyinterior*>(current))){
+				polyinterior* pi = (polyinterior*)current;
 				fptr_val<polynode> fv;
 				fv.init(here,here_cpy);
 				path.push_back(fv);
@@ -93,6 +79,12 @@ bool polytree::search(key* k, simple_vector<fptr_val<polynode>>& path,
 				if(here==DNE){return true;}
 				here_cpy.init(here->all());	
 				continue;
+			}
+			else if(polydata* pd = dynamic_cast<polydata*>(current)){
+				fptr_val<polynode> fv;
+				fv.init(here,here_cpy);
+				path.push_back(fv);
+				return true;
 			}
 			assert(false);
 		}
@@ -199,8 +191,8 @@ bool polytree::preapprove(simple_vector<fptr_val<polynode>>& path,
 		else if(here_cpy.ptr()!=old_cpy.ptr()){
 			return false;
 		} 
-		else if(here_cpy.ptr()==old_cpy.ptr() &&
-			(flag == FP_VALID || flag == FP_PENDING) ){
+		else if(likely(here_cpy.ptr()==old_cpy.ptr() &&
+			(flag == FP_VALID || flag == FP_PENDING) )){
 			depth++;
 			rit--;
 			if(rit<0 || depth>=opts.MAX_DEPTH){break;}
@@ -311,7 +303,7 @@ bool polytree::validate_common(fptr<polynode>* pending_ptr,
 		else if(here_cpy.ptr()!=old_cpy.ptr()){
 			return false;
 		} 
-		else if(flag==FP_VALID && current==old_cpy.ptr()){
+		else if(likely(flag==FP_VALID && current==old_cpy.ptr())){
 			depth++;
 			rit--;
 			if(rit<0 || depth>=opts.MAX_DEPTH){break;}
@@ -404,7 +396,10 @@ bool polytree::construct_substitution(polysub* sub,
 	danger zone never contained a subtree which
 	met the precondition for this substitution.
 	*/
-	if(my_new_peak == NULL){return false;}	
+	if(my_new_peak == NULL){
+		sub->to_here->CAS(sub, FP_PENDING, sub, FP_ABORTED);
+		return false;
+	}
 	my_new_peak->prev = sub->prev;
 
 	/*
@@ -465,16 +460,18 @@ bool polytree::update(key* k, value* v, polyoptions opts,
 		/* Do the pending insertion for substitution*/
 		if(polysub* sub = dynamic_cast<polysub*>(new_node)){
 			if(insert_substitution_at(here,sub,path,opts)){
-				construct_substitution(sub,path,opts);
-				polynode* peak = 
-				 sub->new_peak.load(std::memory_order::memory_order_acquire);
-				if(validate_my_op(here, 
-				 peak,sub->prev,path,opts)){
-					old_node_out = sub->prev;
-					new_node_out = peak;
-					//cout<<"sub success: "<<(((polyinterior*)peak)->slot(k))->ptr()->to_string()<<endl;
-					break;
+				if(construct_substitution(sub,path,opts)){
+					polynode* peak = 
+					 sub->new_peak.load(std::memory_order::memory_order_acquire);
+					if(validate_my_op(here, 
+					 peak,sub->prev,path,opts)){
+						old_node_out = sub->prev;
+						new_node_out = peak;
+						//cout<<"sub success: "<<(((polyinterior*)peak)->slot(k))->ptr()->to_string()<<endl;
+						break;
+					}
 				}
+				// TODO: collect unbuildable sub
 			}
 			// TODO: GC unvalidated node
 		}	
@@ -522,7 +519,7 @@ value* polytree::point_read(key* k, polyoptions opts){
 		here_cpy = fv.val();
 
 		/* handle any pending or aborted nodes */
-		if(here_cpy.flag() == FP_ABORTED){
+		if(unlikely(here_cpy.flag() == FP_ABORTED)){
 			if(opts.READ_HELP_CLEAN_ABORTS){
 				clean_aborted(here,here_cpy.ptr());
 				here_cpy.init(here->all());	
@@ -531,7 +528,7 @@ value* polytree::point_read(key* k, polyoptions opts){
 				path.push_back(fv);
 			}
 		}
-		else if(here_cpy.flag() == FP_PENDING){
+		else if(unlikely(here_cpy.flag() == FP_PENDING)){
 			if(opts.READ_HELP_RESOLVE_PENDING){
 				help_pending(here,here_cpy,path,opts);
 				here_cpy.init(here->all());	

@@ -17,57 +17,20 @@
  *
  */
 
-#ifndef SIMPLEVECTOR_HPP
-#define SIMPLEVECTOR_HPP
+#ifndef POLYUTIL_HPP
+#define POLYUTIL_HPP
 
-template <class T> 
-class simple_vector {
-	
-	T* array = NULL;
-	int64_t capacity = 0;
-	int64_t sz = 0;
 
-public:
-	
-	simple_vector<T>(int64_t capacity) : capacity(capacity){
-		sz = 0;
-		assert(capacity>0);
-		array = (T*)malloc(capacity*sizeof(T));
-	}
+#ifdef __GNUC__
+#define likely(x)    __builtin_expect(!!(x), 1)
+#define unlikely(x)  __builtin_expect(!!(x), 0)
+#else
+#define likely(x)    (x)
+#define unlikely(x)  (x)
+#endif
 
-	inline void push_back(T val){
-		assert(array!=NULL);
-		if(sz>=capacity){
-			T* new_array = (T*)malloc(capacity*2*sizeof(T));
-			memcpy(new_array,array,capacity*sizeof(T));
-			free(array);
-			capacity = capacity*2;
-			array = new_array;
-		}
-		assert(sz<capacity);
-		array[sz] = val;
-		sz++;
-	}
 
-	inline void pop_back(){
-		if(sz>0){sz--;}
-	}
-
-	inline void clear(){sz=0;}
-	inline T back(){
-		assert(sz>0);
-		return get(rbegin());
-	}
-	inline T get(int idx){
-		assert(idx>=0);
-		assert(idx<sz);
-		assert(idx<capacity);
-		return array[idx];
-	}
-	inline int64_t size(){return sz;}
-	inline int64_t rbegin(){return sz-1;}
-
-};
-
+// utility functions
+unsigned long local_rand();
 
 #endif

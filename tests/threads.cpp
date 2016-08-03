@@ -32,7 +32,7 @@
 #include "polytree.hpp"
 #include "radixtree/radixtree.hpp"
 #include "hashtrie/hashtrie.hpp"
-
+#include "chromatictree/chromatictree.hpp"
 
 using namespace std;
 
@@ -51,7 +51,8 @@ static const int NUM_THREADS = 4;
 key** keys;
 value** values;
 //radix_tree* tree;
-hash_trie* tree;
+//hash_trie* tree;
+chromatic_tree* tree;
 pthread_barrier_t barrier;
 time_point<Clock> start;
 time_point<Clock> finish;
@@ -125,7 +126,8 @@ int main (int argv,char** argc){
 		values[i]=value::alloc(buf,8);
 	}
 //	tree = new radix_tree();
-	tree = new hash_trie();
+//	tree = new hash_trie();
+		tree = new chromatic_tree();
 	value* ans;
 	for(int i = 0; i<SZ_DATA; i++){
 		tree->put(keys[i],values[i]);

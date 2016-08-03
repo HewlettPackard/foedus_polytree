@@ -27,6 +27,7 @@
 #include "polysub.hpp"
 #include "polyoptions.hpp"
 #include "simplevector.hpp"
+#include "polyutils.hpp"
 
 class polytree{
 protected:
@@ -393,11 +394,9 @@ protected:
 
 };
 
-
-// utility functions
-unsigned long local_rand();
 void print_UIP(key* k, polynode* new_node, 
 	simple_vector<fptr_val<polynode>>& path);
+
 
 #endif
 
