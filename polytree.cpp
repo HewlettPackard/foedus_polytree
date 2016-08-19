@@ -198,7 +198,7 @@ bool polytree::preapprove(simple_vector<fptr_val<polynode>>& path,
 			if(rit<0 || depth>=opts.MAX_DEPTH){break;}
 			pv = path.get(rit);
 			here = pv.fp();
-			fptr_local<polynode> old_cpy = pv.val();
+			old_cpy = pv.val();
 			here_cpy.init(here->all());	
 			continue;
 		}
@@ -258,7 +258,7 @@ bool polytree::validate_common(fptr<polynode>* pending_ptr,
 	}
 	pv = path.get(rit);
 	here = pv.fp();
-	old_cpy = pv.val();
+	old_cpy.init(pv.val());
 	here_cpy.init(here->all());	
 
 	// TODO: this needs more thought - we have problems
@@ -310,6 +310,7 @@ bool polytree::validate_common(fptr<polynode>* pending_ptr,
 			pv = path.get(rit);
 			here = pv.fp();
 			old_cpy = pv.val();
+			here_cpy.init(here->all());	
 			continue;
 		}
 		else{assert(false);}
@@ -564,7 +565,7 @@ void print_UIP(key* k, polynode* new_node,
 
 	pthread_mutex_lock(&print_lock);
 
-	cout<<"=="<<to_string(k)<<"=="<<endl;
+	cout<<"=="<<to_hex(k)<<"=="<<endl;
 	for(int i = 0; i<path.size(); i++){
 		polynode* current = path.get(i).val().ptr();
 		if(current!=NULL){cout<<current->to_string()<<endl;}

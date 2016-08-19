@@ -126,8 +126,8 @@ WARNING_FLAGS:=-ftrapv -Wreturn-type -W -Wall \
 CFLAGS:=-pthread -g -gdwarf-2 -fpic $(WARNING_FLAGS)
 CXXFLAGS:= -pthread -std=c++11 -g -fpic $(WARNING_FLAGS)
 
-# loader flags
-LDFLAGS := 
+# linker flags
+LDFLAGS := $(WARNING_FLAGS)
 
 
 # -------------------------
@@ -158,7 +158,7 @@ endif
 ifeq ($(BUILD),debug)
 CXXFLAGS += -O0
 CFLAGS += -O0
-# we can add additional release customization here
+# we can add additional debug customization here
 # e.g. link against different libraries, 
 # define enviroment vars, etc.
 endif
@@ -305,7 +305,7 @@ find_morphed_executable=$(filter $(_ODIR)/$(notdir $(basename $1)).o %/$(notdir 
 # $(-*-command-variables-*-) gives us the command line arguments.  It's undocumented.
 # http://stackoverflow.com/questions/23919199/detecting-unused-makefile-command-line-arguments
 default:
-	$(MAKE) .artifacts -f $(MKFILE_PATH) BUILD=$(BUILD_DEFAULT) $(-*-command-variables-*-)
+	$(MAKE) .artifacts -f $(MKFILE_PATH) BUILD=$(DEFAULT_BUILD) $(-*-command-variables-*-)
 
 $(BUILDS): 
 	$(MAKE) .artifacts -f $(MKFILE_PATH) BUILD=$@ $(-*-command-variables-*-)

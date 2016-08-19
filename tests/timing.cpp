@@ -33,6 +33,8 @@
 #include "radixtree/radixtree.hpp"
 #include "hashtrie/hashtrie.hpp"
 #include "chromatictree/chromatictree.hpp"
+#include "trie/trie.hpp"
+
 
 using namespace std;
 
@@ -62,6 +64,13 @@ void gen_random_alphanum(char* buf, const int len) {
 	}
 }
 
+void gen_random(char* buf, const int len) {
+	buf[len] = 0;
+	for (int i = 0; i < len; i++) {
+		buf[i] = rand() % 256;
+	}
+}
+
 int main (int argv,char** argc){
 
 	static const int SZ_DATA = 500000;
@@ -78,11 +87,12 @@ int main (int argv,char** argc){
 
 	for(int i = 0; i<SZ_DATA; i++){
 		r = next_rand(r);
-		gen_random_alphanum(buf,8);
+		gen_random(buf,8);
 		keys[i]=key::alloc(buf,8);
 		values[i]=value::alloc(buf,8);
 	}
-	chromatic_tree* tree = new chromatic_tree();
+	trie* tree = new trie();
+//	chromatic_tree* tree = new chromatic_tree();
 //	hash_trie* tree = new hash_trie();
 	value* ans;
 

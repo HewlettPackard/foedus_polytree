@@ -30,7 +30,7 @@ chromatic_tree::chromatic_tree(){
 	 always_help_clean_abort();
 	default_options.all_flags = default_options.all_flags | 
 	 always_help_resolve_pending();
-	default_options.MAX_DEPTH = 1;  // check the parent, but that's it
+	default_options.MAX_DEPTH = 3;  // TODO: verify this number
 
 
 	get_options.all_flags = default_options.all_flags;
@@ -53,6 +53,10 @@ chromatic_tree::chromatic_tree(){
 	remove_options.FUNC = FUNC_REMOVE;
 	remove_options.OP = OP_UPDATE;
 
+	// insert sentinel
+	value* ans;
+	key* k = key::alloc(NULL,0);
+	update(k,k,put_options,ans,NULL);
 }
 
 
@@ -74,7 +78,8 @@ polynode* chromatic_tree::get_update_node(key* k, value* v,
 		switch(opts.FUNC){
 		case FUNC_PUT:
 		case FUNC_INSERT:
-			return chromatic_kv_node::alloc(k, v,1);
+			//assert(k->len()==0);
+			return chromatic_kv_node::alloc(k,v,1);
 		case FUNC_REPLACE:
 		case FUNC_REMOVE:
 			return NULL;
@@ -93,6 +98,7 @@ polynode* chromatic_tree::get_update_node(key* k, value* v,
 			case FUNC_INSERT:
 				return NULL;
 			case FUNC_REMOVE:
+				// TODO: deal with removing root node, need sentinel node
 				// do a delete substitution
 				delete_sub* sub = new delete_sub(k,pd);
 				path.pop_back(); // adjust path so we target victim node's parent

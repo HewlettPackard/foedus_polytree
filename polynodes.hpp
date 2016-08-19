@@ -204,7 +204,7 @@ public:
 		return (value*)(ptr+sizeof(kv_node)+k()->size_of());
 	}
 	virtual std::string to_string() const{
-		return std::string("kv_node <")+::to_string(k())+" : "+::to_string(v())+">";
+		return std::string("kv_node <")+::to_hex(k())+" : "+::to_hex(v())+">";
 	}
 
 };
@@ -236,7 +236,7 @@ public:
 	}
 
 	virtual std::string to_string() const{
-		return std::string("removed_node <")+::to_string(k())+">";
+		return std::string("removed_node <")+::to_hex(k())+">";
 	}
 };
 

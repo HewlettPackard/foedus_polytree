@@ -55,7 +55,7 @@ hash_trie::hash_trie(){
 
 }
 
-int inline calculate_depth(simple_vector<fptr_val<polynode>>& path){
+static int inline calculate_depth(simple_vector<fptr_val<polynode>>& path){
 	int depth = 0;
 	for(int i = 0; i<path.size(); i++){
 		fptr_val<polynode> fv = path.get(i);

@@ -49,7 +49,7 @@ public:
 
 private:
 	chromatic_interior_node(key* router, int64_t incoming_weight){
-		assert(incoming_weight>=0);
+		if(incoming_weight<0){incoming_weight=0;}
 		this->incoming_weight = incoming_weight;
 		router->copy(_router());
 	}
@@ -124,7 +124,7 @@ private:
 	int64_t incoming_weight;
 
 	chromatic_kv_node(int64_t incoming_weight){
-		assert(incoming_weight>=0);
+		if(incoming_weight<0){incoming_weight=0;}
 		this->incoming_weight = incoming_weight;
 	}
 
@@ -180,5 +180,35 @@ public:
 
 };
 
+
+
+// Rotations come from the original chromatic 
+// tree paper: Chromatic binary search trees by Nurmi 
+// and Soisalon-Soininen, Figure 2
+// http://rd.springer.com/article/10.1007/s002360050057
+class rotation_a_d : public polysub{
+public:
+	const int too_heavy;
+	rotation_a_d(const int too_heavy):too_heavy(too_heavy){}
+	polynode* build();
+};
+
+class rotation_b_e : public polysub{
+public:
+	bool right_long;
+	const int too_heavy;
+	rotation_b_e(bool right_long, const int too_heavy):
+	 right_long(right_long),too_heavy(too_heavy){}
+	polynode* build();
+};
+
+class rotation_c : public polysub{
+public:
+	bool right_long;
+	const int too_heavy;
+	rotation_c(bool right_long, const int too_heavy):
+	 right_long(right_long),too_heavy(too_heavy){}
+	polynode* build();
+};
 
 #endif

@@ -1,36 +1,17 @@
-/*
- * Copyright (c) 2014-2015, Hewlett-Packard Development Company, LP.
- * This program is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the Free
- * Software Foundation; either version 2 of the License, or (at your option)
- * any later version.
- *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
- * more details. You should have received a copy of the GNU General Public
- * License along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
- *
- * HP designates this particular file as subject to the "Classpath" exception
- * as provided by HP in the LICENSE.txt file that accompanied this code.
- *
- */
-
-#include "radixtree.hpp"
-#include "radixnodes.hpp"
+#include "trie.hpp"
+#include "trienodes.hpp"
 #include <iostream>
 
 using namespace std;
 
-radix_tree::radix_tree(){
+trie::trie(){
 
 	default_options.all_flags = 0;
 	default_options.all_flags = default_options.all_flags | 
 	 always_help_clean_abort();
 	default_options.all_flags = default_options.all_flags | 
 	 always_help_resolve_pending();
-	default_options.MAX_DEPTH = 1;  // check the parent, but that's it
+	default_options.MAX_DEPTH = 1;
 
 
 	get_options.all_flags = default_options.all_flags;
@@ -60,8 +41,8 @@ static int inline calculate_depth(simple_vector<fptr_val<polynode>>& path){
 	for(int i = 0; i<path.size(); i++){
 		fptr_val<polynode> fv = path.get(i);
 		polynode* current = fv.val().ptr();
-		if(prefix_node* pn = dynamic_cast<prefix_node*>(current)){
-			depth+=pn->num_bits;
+		if(trie_node* pn = dynamic_cast<trie_node*>(current)){
+			depth++;
 		}
 		else if(dynamic_cast<polydata*>(current)){}
 		else if(current==NULL){}
@@ -73,7 +54,7 @@ static int inline calculate_depth(simple_vector<fptr_val<polynode>>& path){
 
 
 
-polynode* radix_tree::get_update_node(key* k, value* v,
+polynode* trie::get_update_node(key* k, value* v,
 	 simple_vector<fptr_val<polynode>>& path, polyoptions opts,
 	 value*& ans_value_out, bool& callback_out, void* params){
 	
@@ -110,12 +91,12 @@ polynode* radix_tree::get_update_node(key* k, value* v,
 				/* sprouting insert */
 				int64_t depth = calculate_depth(path);
 				assert(depth>=0);
-				prefix_node* top = prefix_node::alloc(depth,8);
-				prefix_node* node = top;
+				trie_node* top = trie_node::alloc(depth);
+				trie_node* node = top;
 				while(node->slot(k)==node->slot(pd->k())){	
 					/* add nodes until keys differ */
-					depth+=node->num_bits;
-					prefix_node* down = prefix_node::alloc(depth,8);
+					depth++;
+					trie_node* down = trie_node::alloc(depth);
 					node->local_insert(k,down);
 					node->num_children++;
 					node=down;
@@ -127,26 +108,21 @@ polynode* radix_tree::get_update_node(key* k, value* v,
 			}
 		}
 	}
-	else if(polyinterior* pi = dynamic_cast<polyinterior*>(current)){
-		/* slot doesn't exist, we need to resize the node*/
-		assert(false);
-	}
 	assert(false);return NULL;
 }
 
-static thread_local unsigned long count = 0; 
 
-void radix_tree::on_update_success(key* k, value* v,
+void trie::on_update_success(key* k, value* v,
 	 simple_vector<fptr_val<polynode>>& path, polynode* new_node,
 	 polynode* old_node, polyoptions opts){
 
 	//print_UIP(k,new_node,path);
 
-	prefix_node* parent;
+	trie_node* parent;
 
 	// update parent node size
-	parent = (prefix_node*)get_penultimate_node(path);
-	if(parent!=NULL){
+	parent = (trie_node*)get_penultimate_node(path);
+	if(likely(parent!=NULL)){
 		kv_node* n = dynamic_cast<kv_node*>(new_node);
 		kv_node* o = dynamic_cast<kv_node*>(old_node);
 		if(n != NULL && o != NULL && !n->k()->equals(o->k()) ){
@@ -157,31 +133,10 @@ void radix_tree::on_update_success(key* k, value* v,
 		}
 	}
 
-	count++;
-
-	//if(count%10 != 0){return;}
 	return;
-/*
-	// check for opportunity for merge
-	for(int i = 0; i<path.size(); i++){
-		fv = path.get(i);
-		here = fv.fp();
-		here_cpy = fv.val();
-		current = here_cpy.ptr();
-
-		// preapprove a location
-		if(merge_sub::scout_location(current,1000)){
-			puts("merging....");
-			polysub* merge = new merge_sub();
-			substitute_at(merge,here,path,opts);
-		}
-		
-	}
-*/
-
 }
 
-value* radix_tree::get_point_read_value(key* k, 
+value* trie::get_point_read_value(key* k, 
 	 simple_vector<fptr_val<polynode>>& path, polyoptions opts){
 
 	assert(opts.OP==OP_READ);
@@ -198,29 +153,29 @@ value* radix_tree::get_point_read_value(key* k,
 	}
 }
 
-value* radix_tree::get(key* k){
+value* trie::get(key* k){
 	value* v = point_read(k,get_options);
 	return v;
 }
 
-value* radix_tree::put(key* k, value* v){
+value* trie::put(key* k, value* v){
 	value* ans;
 	update(k,v,put_options,ans,NULL);
 	return v;
 }
 
-bool radix_tree::insert(key* k, value* v){
+bool trie::insert(key* k, value* v){
 	value* ans;
 	return update(k,v,insert_options,ans,NULL);
 }
 
-value* radix_tree::replace(key* k, value* v){
+value* trie::replace(key* k, value* v){
 	value* ans;
 	update(k,v,replace_options,ans,NULL);
 	return ans;
 }
 
-value* radix_tree::remove(key* k){
+value* trie::remove(key* k){
 	value* ans;
 	update(k,NULL,remove_options,ans,NULL);
 	return ans;
